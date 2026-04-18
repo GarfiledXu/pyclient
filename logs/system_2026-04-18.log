@@ -1,0 +1,24 @@
+2026-04-18 18:17:04.509 [INFO    ] [18720:24756] [__main__:<module>:143] [SYS   ] | Debug Client 初始化...
+2026-04-18 18:17:04.510 [INFO    ] [18720:24756] [__main__:<module>:144] [SYS   ] | 加载基础配置项完成
+2026-04-18 18:17:04.511 [DEBUG   ] [18720:13976] [__main__:simulate_network_recv:153] [NET   ] | 监听端口 8080...
+2026-04-18 18:17:04.511 [INFO    ] [18720:16068] [__main__:simulate_algorithm_task:166] [NV5_OC] | 初始化 nv5 算法库接口
+2026-04-18 18:17:04.612 [PACKET  ] [18720:13976] [__main__:simulate_network_recv:156] [NET   ] | 捕获原始流 -> HDR[AA 55] CMD[01] DATA[00 11] CRC[FF FF]
+2026-04-18 18:17:04.613 [DEBUG   ] [18720:16068] [__main__:simulate_algorithm_task:168] [NV5_OC] | 拉取 mock 数据与嘉豪同步开发进度
+2026-04-18 18:17:04.613 [ERROR   ] [18720:16068] [__main__:simulate_algorithm_task:169] [NV5_OC] | OCR 算法库验证失败: 传入矩阵维度异常
+2026-04-18 18:17:04.613 [WARNING ] [18720:13976] [__main__:simulate_network_recv:158] [NET   ] | 检测到粘包，开始分包处理
+2026-04-18 18:22:38.450 [INFO    ] [16680: 9968] [__main__:<module>:146] [SYS   ] | Debug Client 初始化...
+2026-04-18 18:22:38.451 [DEBUG   ] [16680: 9968] [__main__:<module>:147] [SYS   ] | 读取项目根目录配置文件
+2026-04-18 18:22:38.452 [INFO    ] [16680:21144] [__main__:simulate_network_recv:153] [NET   ] | 开启增量 IO 缓冲区
+2026-04-18 18:22:38.452 [INFO    ] [16680:11688] [__main__:simulate_algorithm_task:165] [NV5_OC] | 初始化 nv5 算法库验证接口
+2026-04-18 18:22:38.552 [RAW     ] [16680:21144] [__main__:simulate_network_recv:156] [NET   ] | 捕获原始帧 -> HDR[AA 55] CMD[01] DATA[00 11] CRC[FF FF]
+2026-04-18 18:22:38.553 [WARNING ] [16680:21144] [__main__:simulate_network_recv:158] [NET   ] | 检测到序列号跳变，可能发生丢包
+2026-04-18 18:22:38.553 [ERROR   ] [16680:21144] [__main__:simulate_network_recv:159] [NET   ] | 增量解析器抛出异常：越界访问
+2026-04-18 18:22:38.553 [DEBUG   ] [16680:11688] [__main__:simulate_algorithm_task:167] [NV5_OC] | 向嘉豪发送当前模块连调状态报告
+2026-04-18 19:41:21.920 [INFO    ] [25252:18628] [__main__:<module>:147] [SYS   ] | Debug Client 初始化...
+2026-04-18 19:41:21.921 [DEBUG   ] [25252:18628] [__main__:<module>:148] [SYS   ] | 读取项目根目录配置文件
+2026-04-18 19:41:21.922 [INFO    ] [25252:17384] [__main__:simulate_network_recv:154] [NET   ] | 开启增量 IO 缓冲区
+2026-04-18 19:41:21.922 [INFO    ] [25252:16688] [__main__:simulate_algorithm_task:166] [NV5_OC] | 初始化 nv5 算法库验证接口
+2026-04-18 19:41:22.022 [RAW     ] [25252:17384] [__main__:simulate_network_recv:157] [NET   ] | 捕获原始帧 -> HDR[AA 55] CMD[01] DATA[00 11] CRC[FF FF]
+2026-04-18 19:41:22.023 [WARNING ] [25252:17384] [__main__:simulate_network_recv:159] [NET   ] | 检测到序列号跳变，可能发生丢包
+2026-04-18 19:41:22.023 [ERROR   ] [25252:17384] [__main__:simulate_network_recv:160] [NET   ] | 增量解析器抛出异常：越界访问
+2026-04-18 19:41:22.023 [DEBUG   ] [25252:16688] [__main__:simulate_algorithm_task:168] [NV5_OC] | 向嘉豪发送当前模块连调状态报告
