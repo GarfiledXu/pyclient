@@ -3,3 +3,4 @@ bak/
 nvs_test_vaults/
 __pycache__/
 test_cache/
+logs/
