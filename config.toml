@@ -1,0 +1,41 @@
+# --- 全局格式配置 ---
+[log.format]
+show_time = true       # 是否显示时间戳 (HH:mm:ss.SSS)
+show_level = true      # 是否显示日志等级 (单字符 D/I/W/E/R)
+show_details = true    # 详情总开关 (设为 false 时，强制关闭下方所有细节项)
+show_thread = true     # 是否显示线程 ID
+show_location = true   # 是否显示代码调用位置 (文件名:行号)
+show_module = true     # 是否显示业务标签 (如 [NET ], [BOOT])
+
+# --- 终端控制台输出配置 ---
+[log.sinks.console]
+enable = true          # 是否在终端打印日志
+level = "DEBUG" # 可选枚举: "TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL", "RAW"
+use_dim_style = true   # 终端特有: 是否对元数据启用灰色弱化显示，突出正文
+
+# --- 本地文件持久化配置 ---
+[log.sinks.file]
+enable = true          #  是否记录到文件
+level = "DEBUG" #可选枚举: "TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL", "RAW"
+path = "logs/nvs_app.log" # 日志存储路径 (String) 支持相对路径(基于 exe 所在目录)或绝对路径。
+
+# --- 日志自动切分策略 ---
+[log.sinks.file.rotation]
+enable = true          # 是否开启自动切分
+size_mb = 50 # 设为 0 则代表关闭按大小切分。 按文件大小切分阈值 (Integer)。单位: MB。
+time = "00:00" # 每天定时切分时间 (String),格式要求: "HH:MM" (24小时制，如 "00:00" 为每天午夜)。填 "" 代表关闭定时切分。
+
+# --- 历史日志清理策略 ---
+[log.sinks.file.retention]
+enable = true          # 是否开启历史日志清理
+rule = "7 days" # 历史日志保留规则 (String)。先到先得。时间格式示例: "7 days", "1 week", "3 months" 容量格式示例: "100 MB", "1 GB" (所有归档日志的总大小上限)
+
+# --- 历史日志归档压缩 ---
+[log.sinks.file.compression]
+enable = false         #  是否开启旧日志压缩 (开启会稍微消耗CPU)
+format = "zip" # 可选枚举: "zip", "gz", "bz2", "xz", "lzma", "tar", "tar.gz", "tar.bz2", "tar.xz"
+
+# --- 具体类型的level配置 ---
+[log.levels.RAW]
+show_time = false      # (Boolean) 覆盖全局格式，强制关闭时间
+show_details = false   # (Boolean) 覆盖全局格式，强制关闭所有元数据详情
