@@ -1,0 +1,22 @@
+[build-system]
+# 声明构建此项目所需的基础工具链
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# 这是注册到 Python 环境中的全局顶级包名，必须与 src 下的文件夹名一致
+name = "pyclient"
+version = "0.1.0"
+description = "PYCLIENT 核心业务与工具包"
+
+# 在此处声明项目依赖的第三方库
+# 执行 pip 安装时，系统会自动下载并解析这些依赖
+dependencies = [
+    # 示例：取消注释并填入你实际用到的库
+    # "loguru>=0.7.0",
+    # "pytest>=7.0.0",
+]
+
+[tool.setuptools.packages.find]
+# 核心路径映射：明确告知打包工具，包的物理源码存放在 src 目录下
+where = ["src"]

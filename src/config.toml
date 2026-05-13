@@ -1,0 +1,63 @@
+# ==============================================================================
+# NVS 上位机客户端 - 日志核心配置文件
+#
+# 注意事项:
+# 1. 路径分隔符请统一使用标准斜杠 "/" 
+# 2. 修改配置后需重启软件方可生效
+# ==============================================================================
+
+[log.format]
+# --- 全局显示开关 (Boolean: true/false) ---
+show_time = true       # 是否显示时间戳 (HH:mm:ss.SSS)
+show_level = true      # 是否显示日志等级 (单字符 D/I/W/E/R)
+show_details = true    # 详情总开关 (设为 false 时，强制关闭下方所有项)
+show_thread = true     # 是否显示线程 ID
+show_location = true   # 是否显示代码调用位置 (文件名:行号)
+show_module = true     # 是否显示业务标签 (如 [NET ])
+
+[log.sinks.console]
+# --- 终端控制台配置 ---
+enable = true          # 是否在终端打印日志 (Boolean)
+# 终端最低输出等级 (String)
+# 可选枚举: "TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL", "RAW"
+level = "DEBUG"
+use_dim_style = true   # 终端特有: 是否对元数据启用灰色弱化显示 (Boolean)
+
+[log.sinks.file]
+# --- 本地文件持久化配置 ---
+enable = true          # 是否记录到文件 (Boolean)
+# 文件落盘最低等级 (String)，通常建议设为 DEBUG 以保留完整追溯现场
+# 可选枚举同上: "TRACE" ~ "RAW"
+level = "DEBUG"
+# 日志存储路径 (String)。支持相对路径(基于 exe 所在目录)或绝对路径。
+path = "logs/nvs_app.log"
+
+[log.sinks.file.rotation]
+enable = true          # 是否开启自动切分 (Boolean)
+# 按文件大小切分阈值 (Integer, 单位: MB)。设为 0 则关闭按大小切分。
+size_mb = 50
+# 每天定时切分时间 (String)。
+# 格式要求: "HH:MM" (24小时制，如 "00:00" 为每天午夜)。填 "" 则关闭定时切分。
+time = "00:00"
+
+[log.sinks.file.retention]
+enable = true          # 是否开启历史日志清理 (Boolean)
+# 历史日志保留策略 (String)
+# 格式要求: "<数字> <单位>"
+# 可选单位: "days", "weeks", "months", "years" (按时间), 或者 "MB", "GB" (按总量)
+# 配置示例: "7 days", "1 week", "100 MB"
+rule = "7 days"
+
+[log.sinks.file.compression]
+enable = false         # 是否开启旧日志压缩归档 (Boolean)
+# 压缩算法格式 (String)
+# 可选枚举: "zip", "gz", "bz2", "xz", "lzma", "tar", "tar.gz", "tar.bz2", "tar.xz"
+format = "zip"
+
+# ==============================================================================
+# 级别精细化覆盖 (Level Override)
+# ==============================================================================
+[log.levels.RAW]
+# 针对底层 RAW 报文，强制关闭时间和细节，保持控制台数据流绝对纯净
+show_time = false      # (Boolean)
+show_details = false   # (Boolean)

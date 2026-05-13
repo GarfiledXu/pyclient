@@ -1,6 +1,6 @@
 import time
-# 触发 util/logger.py 的加载，它会自动在根目录生成 config.toml
-from util.logger import log, format_packet, CONFIG_FILE, APP_DIR
+
+from src.util.logger import log, format_packet, CONFIG_FILE, APP_DIR
 
 
 def run_test():
