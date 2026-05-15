@@ -23,7 +23,8 @@ class ConfigLoader:
         # --- A. 加载包内出厂默认 (必须存在) ---
         try:
             # 这里的 pyclient.asset 是你的单数命名包名
-            base_text = resources.read_text("pyclient.asset", "default.toml")
+            base_text = resources.read_text(
+                "pyclient.asset", "default_config.toml")
             config = tomllib.loads(base_text)
         except Exception as e:
             sys.stderr.write(f"[严重错误] 无法读取包内默认配置: {e}\n")
