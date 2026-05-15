@@ -67,7 +67,7 @@ import hashlib
 import os
 import zlib
 from loguru import logger
-import nvs_cmd_dto as dto  # 引入 DTO 结构定义
+import bak.nvs_cmd_dto as dto  # 引入 DTO 结构定义
 
 
 class NvsFileIOError(Exception):

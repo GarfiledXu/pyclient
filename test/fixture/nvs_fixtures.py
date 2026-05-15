@@ -1,6 +1,6 @@
 import pytest
-from nvs_client import NVSClient
-from nvs_file_svc import NvsFileSvc
+from bak.nvs_client import NVSClient
+from bak.nvs_file_svc import NvsFileSvc
 
 
 @pytest.fixture(scope="session")

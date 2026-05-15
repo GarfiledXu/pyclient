@@ -142,7 +142,7 @@ from dataclasses import asdict
 from typing import Type, TypeVar, Any
 
 # 引入我们刚刚定义好的 DTO 基类
-from nvs_cmd_dto import BaseCmd
+from bak.nvs_cmd_dto import BaseCmd
 
 # 泛型约束，用于让 IDE 完美推导 request_dto 返回的 Res 类型
 T_Cmd = TypeVar('T_Cmd', bound=BaseCmd)

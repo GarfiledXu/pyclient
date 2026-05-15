@@ -1,6 +1,6 @@
 import pytest
-import nvs_cmd_dto as dto
-from nvs_client import NvsBusinessError, NvsTimeoutError
+import bak.nvs_cmd_dto as dto
+from bak.nvs_client import NvsBusinessError, NvsTimeoutError
 
 # ==========================================
 # 测试环境“宏定义”配置区

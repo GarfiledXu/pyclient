@@ -21,10 +21,10 @@
 import pytest
 import os
 import json
-import nvs_cmd_dto as dto
-from nvs_client import NvsBusinessError, NvsTimeoutError
+import bak.nvs_cmd_dto as dto
+from bak.nvs_client import NvsBusinessError, NvsTimeoutError
 import dataclasses  # 核心修复点：确保全局可用
-import nvs_cmd_dto as dto
+import bak.nvs_cmd_dto as dto
 
 # # ==========================================
 # # 测试环境“宏定义”配置区 (Configuration)

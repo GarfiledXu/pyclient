@@ -4,7 +4,7 @@ import dataclasses
 import time
 from pathlib import Path
 
-import nvs_cmd_dto as dto
+import bak.nvs_cmd_dto as dto
 # 假设你在 conftest.py 注册了 --action 参数
 # 连接设备 A，运行导出任务：
 # pytest tests/test_migration.py --action=export --vault-name=device_A_golden
