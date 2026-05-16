@@ -1,16 +1,12 @@
 import sys
 import os
+from pathlib import Path
 from loguru import logger
-from .config import cfg  # 导入已合并好的全局配置
-from pathlib import Path  # <--- 补上这一行
-
-# ==========================================
-# 1. 自定义切分判定器 (保持你原有的优秀逻辑)
-# ==========================================
+from .config import cfg, ConfigManager
 
 
 class DualRotator:
-    """支持 [大小] 与 [每天固定时间] 组合的切分器"""
+    """组合切分判定器，支持按文件大小与每日固定时间点执行切分"""
 
     def __init__(self, size_mb: float, at_time_str: str):
         self.size_limit = int(
@@ -39,46 +35,36 @@ class DualRotator:
             return True
         return False
 
-# ==========================================
-# 2. 日志管理器
-# ==========================================
-
 
 class LogManager:
     @staticmethod
     def _make_formatter(sink_name: str, enable_color: bool = False):
-        """格式化工厂：从 cfg 中动态提取显示规则"""
-        log_cfg = cfg.get("log", {})
-        format_cfg = log_cfg.get("format", {})
-        sink_cfg = log_cfg.get("sinks", {}).get(sink_name, {})
+        """格式化器生成工厂，根据日志级别选择预先固化的配置对象"""
+        pipe_cfg = cfg.log.console if sink_name == "console" else cfg.log.file
 
         def formatter(record):
-            # 合并覆盖规则：全局 < Sink特定 < 级别特定
-            active_cfg = format_cfg.copy()
-            active_cfg.update(sink_cfg.get("override", {}))
-            active_cfg.update(log_cfg.get(
-                "levels", {}).get(record["level"].name, {}))
+            fmt = pipe_cfg.formats.raw if record["level"].name == "RAW" else pipe_cfg.formats.default
 
             parts = []
-            if active_cfg.get("show_time"):
+            if fmt.show_time:
                 parts.append(
                     "<green>{time:HH:mm:ss.SSS}</green>" if enable_color else "{time:HH:mm:ss.SSS}")
-            if active_cfg.get("show_level"):
+            if fmt.show_level:
                 parts.append(
                     "<level>{level.name: <1.1}</level>" if enable_color else "{level.name: <1.1}")
 
-            if active_cfg.get("show_details"):
+            if fmt.show_details:
                 meta = []
-                if active_cfg.get("show_thread"):
+                if fmt.show_thread:
                     meta.append("[{thread.id: >5}]")
-                if active_cfg.get("show_location"):
+                if fmt.show_location:
                     meta.append("[{name: <8.8}:{line: >3}]")
-                if active_cfg.get("show_module"):
+                if fmt.show_module:
                     meta.append(
                         f"[{record['extra'].get('module', 'SYS'): <6.6}]")
 
                 meta_str = " ".join(meta)
-                if enable_color and sink_cfg.get("use_dim_style", False):
+                if enable_color and pipe_cfg.use_dim_style:
                     parts.append(f"<dim>{meta_str}</dim>")
                 else:
                     parts.append(meta_str)
@@ -86,52 +72,44 @@ class LogManager:
             parts.append(
                 "| <level>{message}</level>\n" if enable_color else "| {message}\n")
             return " ".join(parts)
+
         return formatter
 
     @classmethod
     def setup(cls):
-        """启动配置：由 cfg 驱动全链路挂载"""
-        log_data = cfg.get("log", {})
+        """配置并初始化 Loguru 日志挂载点"""
         logger.remove()
-
-        # 1. 注册特殊级别
         logger.level("RAW", no=15, color="<blue><bold>")
 
-        # 2. 挂载控制台
-        con_cfg = log_data.get("sinks", {}).get("console", {})
-        if con_cfg.get("enable", True):
+        # 挂载 stdout 控制台
+        if cfg.log.console.enable:
             logger.add(
                 sys.stdout,
                 format=cls._make_formatter("console", True),
-                level=con_cfg.get("level", "DEBUG"),
+                level=cfg.log.console.level,
                 colorize=True
             )
 
-        # 3. 挂载文件
-        f_cfg = log_data.get("sinks", {}).get("file", {})
-        if f_cfg.get("enable", True):
-            # 路径处理：基于根目录定位日志
-            root_dir = Path(__file__).resolve().parents[2]
-            f_path = root_dir / f_cfg.get("path", "logs/app.log")
+        # 挂载本地日志文件
+        if cfg.log.file.enable:
+            root_dir = ConfigManager.get_root_dir()
+            f_path = root_dir / cfg.log.file.path
 
-            rot_cfg = f_cfg.get("rotation", {})
-            rot_val = DualRotator(rot_cfg.get("size_mb", 0), rot_cfg.get(
-                "time", "")) if rot_cfg.get("enable") else None
+            rot_val = None
+            if cfg.log.file.size_mb > 0 or cfg.log.file.time:
+                rot_val = DualRotator(cfg.log.file.size_mb, cfg.log.file.time)
 
             logger.add(
                 str(f_path),
                 format=cls._make_formatter("file", False),
-                level=f_cfg.get("level", "DEBUG"),
+                level=cfg.log.file.level,
                 rotation=rot_val,
-                retention=f_cfg.get("retention", {}).get("rule", "7 days"),
-                compression=f_cfg.get("compression", {}).get("format", "zip") if f_cfg.get(
-                    "compression", {}).get("enable") else None,
+                retention=cfg.log.file.retention,
+                compression=cfg.log.file.compression_format if cfg.log.file.compression_enable else None,
                 enqueue=True,
                 delay=True
             )
-
         return logger
 
 
-# --- 全局暴露唯一 log 实例 ---
 log = LogManager.setup()
