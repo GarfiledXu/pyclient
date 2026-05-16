@@ -11,6 +11,7 @@ except ImportError:
 # 1. 基础结构体定义
 # ==============================================================================
 
+
 @dataclass
 class LogFinalFormatConfig:
     """固化后的日志格式化开关结构体"""
@@ -55,17 +56,19 @@ class LogFileRuntimeConfig:
 # 2. 模块级配置容器（内聚自身的反序列化与多级覆盖逻辑）
 # ==============================================================================
 
+
 @dataclass
 class LogModuleRuntimeConfig:
     """日志模块运行期配置顶级容器"""
-    console: LogConsoleRuntimeConfig = field(default_factory=LogConsoleRuntimeConfig)
+    console: LogConsoleRuntimeConfig = field(
+        default_factory=LogConsoleRuntimeConfig)
     file: LogFileRuntimeConfig = field(default_factory=LogFileRuntimeConfig)
 
     @classmethod
     def from_toml_dict(cls, log_toml: dict) -> "LogModuleRuntimeConfig":
         """日志模块专属的解析、打平、覆盖工厂函数"""
         instance = cls()
-        
+
         raw_fmt = log_toml.get("format", {})
         con_toml = log_toml.get("sinks", {}).get("console", {})
         file_toml = log_toml.get("sinks", {}).get("file", {})
@@ -76,11 +79,11 @@ class LogModuleRuntimeConfig:
         con_cfg.enable = con_toml.get("enable", True)
         con_cfg.level = con_toml.get("level", "DEBUG")
         con_cfg.use_dim_style = con_toml.get("use_dim_style", True)
-        
+
         con_default_dict = raw_fmt.copy()
         con_default_dict.update(con_toml.get("override", {}))
         con_cfg.formats.default = LogFinalFormatConfig(**con_default_dict)
-        
+
         con_raw_dict = con_default_dict.copy()
         con_raw_dict.update(raw_override)
         con_cfg.formats.raw = LogFinalFormatConfig(**con_raw_dict)
@@ -92,14 +95,17 @@ class LogModuleRuntimeConfig:
         file_cfg.path = file_toml.get("path", "logs/nvs_app.log")
         file_cfg.size_mb = file_toml.get("rotation", {}).get("size_mb", 50.0)
         file_cfg.time = file_toml.get("rotation", {}).get("time", "00:00")
-        file_cfg.retention = file_toml.get("retention", {}).get("rule", "7 days")
-        file_cfg.compression_format = file_toml.get("compression", {}).get("format", "zip")
-        file_cfg.compression_enable = file_toml.get("compression", {}).get("enable", False)
+        file_cfg.retention = file_toml.get(
+            "retention", {}).get("rule", "7 days")
+        file_cfg.compression_format = file_toml.get(
+            "compression", {}).get("format", "zip")
+        file_cfg.compression_enable = file_toml.get(
+            "compression", {}).get("enable", False)
 
         file_default_dict = raw_fmt.copy()
         file_default_dict.update(file_toml.get("override", {}))
         file_cfg.formats.default = LogFinalFormatConfig(**file_default_dict)
-        
+
         file_raw_dict = file_default_dict.copy()
         file_raw_dict.update(raw_override)
         file_cfg.formats.raw = LogFinalFormatConfig(**file_raw_dict)
@@ -120,6 +126,7 @@ class LogModuleRuntimeConfig:
 # 3. 全局应用配置根容器
 # ==============================================================================
 
+
 @dataclass
 class AppConfig:
     """全局应用配置根容器"""
@@ -132,6 +139,7 @@ class AppConfig:
 # 4. 配置管理器（高内聚、模块化组合）
 # ==============================================================================
 
+
 class ConfigManager:
     @staticmethod
     def get_root_dir() -> Path:
@@ -143,7 +151,7 @@ class ConfigManager:
         """主入口：分发数据片断，组合组装各子模块配置"""
         app_cfg = AppConfig()
         user_path = cls.get_root_dir() / "config" / "config.toml"
-        
+
         # 1. 外部配置文件不存在，各子模块执行各自的保底fallback逻辑
         if not user_path.exists():
             app_cfg.log = LogModuleRuntimeConfig.create_default_fallback()
@@ -154,15 +162,15 @@ class ConfigManager:
         try:
             with open(user_path, "rb") as f:
                 toml_root = tomllib.load(f)
-                
+
                 # --- 分发组装线 1：日志模块 ---
                 log_data = toml_root.get("log", {})
                 app_cfg.log = LogModuleRuntimeConfig.from_toml_dict(log_data)
-                
+
                 # --- 分发组装线 2：未来串口模块扩展 ---
                 # serial_data = toml_root.get("serial", {})
                 # app_cfg.serial = SerialModuleRuntimeConfig.from_toml_dict(serial_data)
-                
+
                 # --- 分发组装线 3：未来OCR模块扩展 ---
                 # ocr_data = toml_root.get("ocr", {})
                 # app_cfg.ocr = OcrModuleRuntimeConfig.from_toml_dict(ocr_data)
@@ -171,8 +179,46 @@ class ConfigManager:
             sys.stderr.write(f"[Config] 增量覆盖合并计算失败，强行维持出厂默认属性: {e}\n")
             # 异常时同样保障日志模块的出厂保底
             app_cfg.log = LogModuleRuntimeConfig.create_default_fallback()
-        
+
         return app_cfg
 
 
 cfg = ConfigManager.load()
+
+
+# ==============================================================================
+# 配置文件简易对照参考（模板注释）
+# ==============================================================================
+# [log.format]
+# show_time = true       # 是否显示时间戳 (HH:mm:ss.SSS)
+# show_level = true      # 是否显示日志等级简写 (D/I/W/E/R)
+# show_details = true    # 详情总开关 (若为 false，强制关闭下方所有项)
+# show_thread = true     # 是否显示线程 ID
+# show_location = true   # 是否显示代码调用位置 (文件名:行号)
+# show_module = true     # 是否显示业务标签
+#
+# [log.sinks.console]
+# enable = true          # 是否在终端打印日志
+# level = "DEBUG"        # 最低输出等级
+# use_dim_style = true   # 是否对元数据启用灰色弱化显示
+#
+# [log.sinks.file]
+# enable = true          # 是否记录到文件
+# level = "DEBUG"        # 文件落盘最低等级
+# path = "logs/nvs_app.log" # 日志存储路径（基于项目根目录）
+#
+# [log.sinks.file.rotation]
+# size_mb = 50.0         # 按文件大小切分阈值（单位: MB）。若设为 0.0 则关闭大小切分
+# time = "00:00"         # 每天定时切分时间（24小时制 "HH:MM"）
+#
+# [log.sinks.file.retention]
+# rule = "7 days"        # 历史日志保留策略
+#
+# [log.sinks.file.compression]
+# enable = false         # 是否开启旧日志压缩
+# format = "zip"         # 压缩算法格式, 可选: "zip", "gz"
+#
+# [log.levels.RAW]
+# show_time = false      # RAW 级别特异性覆盖：关闭时间
+# show_details = false   # RAW 级别特异性覆盖：关闭详情
+# ==============================================================================
