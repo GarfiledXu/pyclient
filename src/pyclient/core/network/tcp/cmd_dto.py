@@ -1,24 +1,19 @@
-
-
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
 
 
 class BaseCmd:
-    """
-    所有指令 DTO 的基类。
-    利用 __init_subclass__ 实现自动注册，强制要求传入 cmd_name 参数。
-    """
+    """所有指令 DTO 的基类，利用元类特性实现全局指令名到子类的自动映射注册"""
     registry = {}
 
     def __init_subclass__(cls, cmd_name: str, **kwargs):
-        super().__init_subclass__(**kwargs)
+        super().__init_subclass__(kwargs)
         cls.registry[cmd_name] = cls
         cls.CMD_NAME = cmd_name
 
-# ==========================================
-# 1. 基础查询功能
-# ==========================================
+# ==============================================================================
+# 1. FILE_SVC 子系统指令路由集 (文件与目录操作)
+# ==============================================================================
 
 
 class CmdCapQuery(BaseCmd, cmd_name="File_SVC_CAP_Query"):
@@ -29,8 +24,8 @@ class CmdCapQuery(BaseCmd, cmd_name="File_SVC_CAP_Query"):
     @dataclass
     class Res:
         max_chunk_size: int
-        support_compress: list
-        root_paths: list
+        support_compress: List[str]
+        root_paths: List[str]
 
 
 class CmdStat(BaseCmd, cmd_name="File_SVC_STAT"):
@@ -58,11 +53,7 @@ class CmdList(BaseCmd, cmd_name="File_SVC_List"):
         file_count: int
         has_more: int
         next_cursor: int
-        files: list  # 内部是 dict: {"path": "/x/", "is_dir": 1}
-
-# ==========================================
-# 2. 文件传输 (Read / Write)
-# ==========================================
+        files: List[Dict[str, Any]]
 
 
 class CmdReadOpen(BaseCmd, cmd_name="File_SVC_Read_Open"):
@@ -89,7 +80,6 @@ class CmdReadData(BaseCmd, cmd_name="File_SVC_Read_Data"):
         data_len: int = 0
         is_eof: int = 0
         crc32: int = 0
-        # 接收 MCU 传回来的二进制块
         binary_data: bytes = field(default=b'', repr=False)
 
 
@@ -98,7 +88,7 @@ class CmdWriteOpen(BaseCmd, cmd_name="File_SVC_Write_Open"):
     class Req:
         path: str
         total_size: int
-        md5: str        # 补齐了丢失的 MD5 字段
+        md5: str
 
     @dataclass
     class Res:
@@ -112,7 +102,6 @@ class CmdWriteData(BaseCmd, cmd_name="File_SVC_Write_Data"):
         offset: int
         data_len: int
         crc32: int
-        # 携带发往 MCU 的二进制块，禁止在控制台打印乱码
         binary_data: bytes = field(default=b'', repr=False)
 
     @dataclass
@@ -129,10 +118,6 @@ class CmdClose(BaseCmd, cmd_name="File_SVC_Close"):
     @dataclass
     class Res:
         pass
-
-# ==========================================
-# 3. 文件及目录操作
-# ==========================================
 
 
 class CmdDelete(BaseCmd, cmd_name="File_SVC_Delete"):
@@ -154,9 +139,9 @@ class CmdMkdir(BaseCmd, cmd_name="File_SVC_MKDIR"):
     class Res:
         pass
 
-# ==========================================
-# 4. 备份业务流控制
-# ==========================================
+# ==============================================================================
+# 2. BACKUP 子系统指令路由集 (备份流业务控制)
+# ==============================================================================
 
 
 class CmdBackupManifestQuery(BaseCmd, cmd_name="Backup_Manifest_Query"):
@@ -166,8 +151,8 @@ class CmdBackupManifestQuery(BaseCmd, cmd_name="Backup_Manifest_Query"):
 
     @dataclass
     class Res:
-        roots: list
-        files: list
+        roots: List[str]
+        files: List[Dict[str, Any]]
 
 
 class CmdBackupExportStart(BaseCmd, cmd_name="Backup_Export_Start"):

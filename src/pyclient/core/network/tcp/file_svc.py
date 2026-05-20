@@ -1,56 +1,36 @@
 import os
-import json
 import zlib
 import hashlib
-import random
-from loguru import logger
+from typing import Callable, Optional
 
-import hashlib
-import os
-import zlib
-from loguru import logger
-import bak.nvs_cmd_dto as dto  # 引入 DTO 结构定义
-
-
-class NvsFileIOError(Exception):
-    """NVS专属的文件传输异常"""
-    pass
+import pyclient.core.cmd_dto as dto
+from pyclient.core.protocol import NVSClient
+from pyclient.core.network.tcp.exception import NvsFileIOError
 
 
 class NvsFileSvc:
-    """NVS 文件传输服务 (对齐下位机 File_SVC 模块)"""
+    """文件子系统业务层路由服务控制器 (对齐下位机 File_SVC 模块行为)"""
 
-    def __init__(self, client):
+    def __init__(self, client: NVSClient):
         self.client = client
 
     @staticmethod
-    def calculate_md5(file_path):
+    def calculate_md5(file_path: str) -> str:
+        """计算本地文件的 MD5 摘要值"""
         hasher = hashlib.md5()
         with open(file_path, 'rb') as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hasher.update(chunk)
         return hasher.hexdigest()
 
-    @staticmethod
-    def generate_test_file(local_path, size_bytes):
-        chunk_size = 1024 * 1024
-        with open(local_path, 'wb') as f:
-            remaining = size_bytes
-            while remaining > 0:
-                write_size = min(chunk_size, remaining)
-                f.write(os.urandom(write_size))
-                remaining -= write_size
-        return NvsFileSvc.calculate_md5(local_path)
-
-    def write(self, local_path: str, remote_path: str) -> bool:
-        """[写入操作] 纯对象化交互流程"""
+    def write(self, local_path: str, remote_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> bool:
+        """将本地文件通过流式强类型对象分块协议安全写入下位机，内建 MD5 闭环校验"""
         if not os.path.exists(local_path):
-            raise FileNotFoundError(f"本地文件不存在: {local_path}")
+            raise FileNotFoundError(f"本地源文件不存在: {local_path}")
 
         file_size = os.path.getsize(local_path)
         local_md5 = self.calculate_md5(local_path)
 
-        # 1. 开启写会话
         open_res = self.client.request_dto(
             dto.CmdWriteOpen,
             path=remote_path,
@@ -58,11 +38,9 @@ class NvsFileSvc:
             md5=local_md5
         )
         sid = open_res.session_id
-
         step = 4096
         offset = 0
 
-        # 2. 流式传输数据
         try:
             with open(local_path, 'rb') as f:
                 while offset < file_size:
@@ -79,8 +57,9 @@ class NvsFileSvc:
                         binary_data=chunk
                     )
                     offset += len(chunk)
+                    if progress_callback:
+                        progress_callback(offset, file_size)
 
-            # 3. 正常关闭会话
             self.client.request_dto(dto.CmdClose, session_id=sid)
 
         except Exception as e:
@@ -89,21 +68,18 @@ class NvsFileSvc:
                 self.client.request_dto(dto.CmdDelete, path=remote_path)
             except Exception:
                 pass
-            raise NvsFileIOError(f"写入过程异常中断: {str(e)}")
+            raise NvsFileIOError(f"文件写入异常中断: {e}")
 
-        # 4. 闭环校验 MD5
         stat_res = self.client.request_dto(dto.CmdStat, path=remote_path)
         if stat_res.md5 != local_md5:
             self.client.request_dto(dto.CmdDelete, path=remote_path)
-            raise NvsFileIOError(
-                f"完整性校验失败！期望: {local_md5}, 实际: {stat_res.md5}")
+            raise NvsFileIOError(f"完整性校验失败: 期望={local_md5}, 实际={stat_res.md5}")
 
         return True
 
-    def read(self, remote_path: str, local_path: str) -> bool:
-        """[读取操作] 纯对象化交互流程"""
+    def read(self, remote_path: str, local_path: str, progress_callback: Optional[Callable[[int, int], None]] = None) -> bool:
+        """从下位机读取目标文件并落盘至本地，内建单包分块 CRC32 数据校验"""
         open_res = self.client.request_dto(dto.CmdReadOpen, path=remote_path)
-
         sid = open_res.session_id
         total_size = open_res.file_size
         offset = 0
@@ -123,11 +99,12 @@ class NvsFileSvc:
                     local_crc32 = zlib.crc32(chunk) & 0xFFFFFFFF
 
                     if remote_crc32 != 0 and local_crc32 != remote_crc32:
-                        raise NvsFileIOError(
-                            f"单包 CRC32 失败！Offset: {offset}, 本地: {local_crc32}, 远端: {remote_crc32}")
+                        raise NvsFileIOError(f"分包 CRC32 校验失败，偏移量: {offset}")
 
                     f.write(chunk)
                     offset += len(chunk)
+                    if progress_callback:
+                        progress_callback(offset, total_size)
 
             self.client.request_dto(dto.CmdClose, session_id=sid)
 
@@ -138,6 +115,6 @@ class NvsFileSvc:
                 self.client.request_dto(dto.CmdClose, session_id=sid)
             except Exception:
                 pass
-            raise NvsFileIOError(f"读取过程崩溃: {str(e)}")
+            raise NvsFileIOError(f"文件读取异常中断: {e}")
 
         return True
