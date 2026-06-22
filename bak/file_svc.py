@@ -5,7 +5,7 @@ from typing import Callable, Optional
 
 import pyclient.core.cmd_dto as dto
 from pyclient.core.protocol import NVSClient
-from pyclient.core.network.tcp.exception import NvsFileIOError
+from bak.exception import NvsFileIOError
 
 
 class NvsFileSvc:

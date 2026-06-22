@@ -8,7 +8,7 @@ from typing import Type, TypeVar, Any
 
 from pyclient.logger import log
 from pyclient.core.cmd_dto import BaseCmd
-from pyclient.core.network.tcp.exception import NvsTimeoutError, NvsBusinessError
+from bak.exception import NvsTimeoutError, NvsBusinessError
 
 T_Cmd = TypeVar('T_Cmd', bound=BaseCmd)
 

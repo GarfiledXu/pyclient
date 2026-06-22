@@ -5,6 +5,7 @@ class NvsProtocolError(Exception):
 
 class NvsTimeoutError(NvsProtocolError):
     """网络通信超时异常：远端在指定时间内未返回任何有效报文"""
+
     def __init__(self, cmd: str, timeout: float):
         self.cmd = cmd
         self.timeout = timeout
@@ -40,7 +41,8 @@ class NvsBusinessError(NvsProtocolError):
             self.module = parts[0]
             self.error_code = parts[1]
 
-        self.error_desc = self.ERROR_MAP.get(self.error_code, f"CODE_{self.error_code}")
+        self.error_desc = self.ERROR_MAP.get(
+            self.error_code, f"CODE_{self.error_code}")
         super().__init__(
             f"业务报错: 命令[{self.cmd}] -> 模块[{self.module}] 返回错误码[{self.error_code}] ({self.error_desc})"
         )
@@ -49,3 +51,14 @@ class NvsBusinessError(NvsProtocolError):
 class NvsFileIOError(NvsProtocolError):
     """文件传输业务流异常"""
     pass
+
+
+class NvsProtocolError(Exception):
+    pass
+
+
+class NvsNetworkDroppedError(NvsProtocolError):
+    """物理链路断开异常：在请求过程中网线拔出或远端重启"""
+
+    def __init__(self):
+        super().__init__("物理链路已断开或正在重连，指令执行中止")
